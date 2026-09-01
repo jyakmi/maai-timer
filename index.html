@@ -1,0 +1,616 @@
+<meta charset="UTF-8">
+<title>間合い</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f1e9;
+    --surface: #fbf9f4;
+    --surface-border: #e2dac8;
+    --text: #2b2924;
+    --text-muted: #8a8271;
+    --wood: #93704b;
+    --wood-soft: #ece1d0;
+    --sage: #74886d;
+    --sage-soft: #e2e8dd;
+    --tile: #333a42;
+    --tile-soft: #dfe2e4;
+    --shadow: 0 1px 2px rgba(43, 41, 36, 0.05), 0 16px 40px rgba(43, 41, 36, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1a16;
+      --surface: #242119;
+      --surface-border: #38332a;
+      --text: #ede8dd;
+      --text-muted: #a89e8a;
+      --wood: #c99f74;
+      --wood-soft: #382d20;
+      --sage: #9ab093;
+      --sage-soft: #26302a;
+      --tile: #aab0b8;
+      --tile-soft: #2c3238;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #1c1a16;
+    --surface: #242119;
+    --surface-border: #38332a;
+    --text: #ede8dd;
+    --text-muted: #a89e8a;
+    --wood: #c99f74;
+    --wood-soft: #382d20;
+    --sage: #9ab093;
+    --sage-soft: #26302a;
+    --tile: #aab0b8;
+    --tile-soft: #2c3238;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    padding: 36px 32px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    transition: border-color 0.4s ease;
+  }
+
+  .card[data-mode="focus"] { border-color: color-mix(in srgb, var(--wood) 35%, var(--surface-border)); }
+  .card[data-mode="rest"]  { border-color: color-mix(in srgb, var(--sage) 35%, var(--surface-border)); }
+
+  .mode-label {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .mode-label[data-active="focus"] { color: var(--wood); }
+  .mode-label[data-active="rest"]  { color: var(--sage); }
+
+  .ring-wrap {
+    position: relative;
+    width: 240px;
+    height: 240px;
+  }
+
+  .ring-wrap svg { transform: rotate(-90deg); }
+
+  .ring-track { fill: none; stroke: var(--surface-border); stroke-width: 10; }
+
+  .ring-progress {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease;
+  }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .time-display {
+    font-size: 46px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .time-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .break-hint {
+    margin: -10px 0 0;
+    font-size: 13px;
+    color: var(--sage);
+    background: var(--sage-soft);
+    padding: 7px 16px;
+    border-radius: 999px;
+    text-align: center;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  .presets-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .preset-btn {
+    font-size: 12.5px;
+    padding: 7px 14px;
+  }
+
+  .preset-btn[data-active="true"] {
+    background: var(--wood-soft);
+    border-color: var(--wood);
+    color: var(--wood);
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 999px;
+    border: 1px solid var(--surface-border);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 22px;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
+  }
+
+  button:active { transform: scale(0.96); }
+
+  button:focus-visible { outline: 2px solid var(--wood); outline-offset: 2px; }
+
+  .btn-primary {
+    background: var(--wood);
+    border-color: var(--wood);
+    color: var(--surface);
+  }
+
+  .btn-primary:hover { background: color-mix(in srgb, var(--wood) 85%, black); }
+
+  .btn-secondary:hover { background: var(--wood-soft); }
+
+  .settings {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--surface-border);
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .field-label {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stepper button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stepper input {
+    width: 46px;
+    text-align: center;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    padding: 5px 4px;
+  }
+
+  .stepper input:focus-visible { outline: 2px solid var(--wood); outline-offset: 1px; }
+
+  select {
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+  }
+
+  .sound-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .preview-btn {
+    padding: 6px 12px;
+    font-size: 12.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring-progress { transition: none; }
+  }
+</style>
+
+<div class="card" id="card" data-mode="focus">
+  <p class="mode-label" id="modeLabel" data-active="focus">集中</p>
+
+  <div class="ring-wrap">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <circle class="ring-track" cx="120" cy="120" r="104"></circle>
+      <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="104" stroke="#93704b"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="time-display" id="timeDisplay">25:00</div>
+      <div class="time-sub" id="timeSub">開始前</div>
+    </div>
+  </div>
+
+  <p class="break-hint" id="breakHint" hidden></p>
+
+  <div class="controls">
+    <button class="btn-primary" id="startBtn">開始</button>
+    <button class="btn-secondary" id="resetBtn">リセット</button>
+  </div>
+
+  <div class="settings">
+    <div class="field-row presets-row">
+      <span class="field-label">プリセット</span>
+      <div class="presets">
+        <button class="btn-secondary preset-btn" data-focus="90" data-rest="20">深い集中 90/20</button>
+        <button class="btn-secondary preset-btn" data-focus="25" data-rest="5">浅い集中 25/5</button>
+        <button class="btn-secondary preset-btn" data-focus="52" data-rest="17">52/17</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <span class="field-label">集中時間（分）</span>
+      <div class="stepper">
+        <button data-step="-1" data-target="focusMin" aria-label="集中時間を減らす">−</button>
+        <input type="number" id="focusMin" value="25" min="1" max="180" inputmode="numeric">
+        <button data-step="1" data-target="focusMin" aria-label="集中時間を増やす">＋</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <span class="field-label">休憩時間（分）</span>
+      <div class="stepper">
+        <button data-step="-1" data-target="restMin" aria-label="休憩時間を減らす">−</button>
+        <input type="number" id="restMin" value="5" min="1" max="60" inputmode="numeric">
+        <button data-step="1" data-target="restMin" aria-label="休憩時間を増やす">＋</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <span class="field-label">ベル音</span>
+      <div class="sound-row">
+        <select id="soundSelect">
+          <option value="temple">鐘（低く長い余韻）</option>
+          <option value="chime" selected>チャイム（澄んだ音）</option>
+          <option value="beep">シンプルビープ</option>
+          <option value="moktak">木魚（乾いた音）</option>
+        </select>
+        <button class="btn-secondary preview-btn" id="previewBtn">試聴</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var CIRC = 2 * Math.PI * 104;
+  var ringProgress = document.getElementById("ringProgress");
+  ringProgress.style.strokeDasharray = CIRC;
+  ringProgress.style.strokeDashoffset = 0;
+
+  var card = document.getElementById("card");
+  var modeLabel = document.getElementById("modeLabel");
+  var timeDisplay = document.getElementById("timeDisplay");
+  var timeSub = document.getElementById("timeSub");
+  var startBtn = document.getElementById("startBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var focusMinInput = document.getElementById("focusMin");
+  var restMinInput = document.getElementById("restMin");
+  var soundSelect = document.getElementById("soundSelect");
+  var previewBtn = document.getElementById("previewBtn");
+  var breakHint = document.getElementById("breakHint");
+  var presetBtns = document.querySelectorAll(".preset-btn");
+
+  var BREAK_MESSAGES = [
+    "画面から離れて、遠くを見る",
+    "立ち上がって、伸びをする",
+    "窓の外を見る",
+    "水を一口飲む",
+    "肩と首をゆっくり回す",
+    "深呼吸を3回する"
+  ];
+
+  var MODE_COLOR = { focus: "#93704b", rest: "#74886d" };
+
+  var state = {
+    mode: "focus",
+    running: false,
+    remaining: 25 * 60,
+    total: 25 * 60,
+    tickId: null
+  };
+
+  function clampMinutes(input, min, max) {
+    var v = parseInt(input.value, 10);
+    if (isNaN(v)) v = min;
+    v = Math.max(min, Math.min(max, v));
+    input.value = v;
+    return v;
+  }
+
+  function updatePresetHighlight() {
+    var f = parseInt(focusMinInput.value, 10);
+    var r = parseInt(restMinInput.value, 10);
+    presetBtns.forEach(function (btn) {
+      var match = parseInt(btn.getAttribute("data-focus"), 10) === f && parseInt(btn.getAttribute("data-rest"), 10) === r;
+      btn.setAttribute("data-active", match ? "true" : "false");
+    });
+  }
+
+  function syncDurationsIfIdle() {
+    updatePresetHighlight();
+    if (state.running) return;
+    var minutes = state.mode === "focus" ? clampMinutes(focusMinInput, 1, 180) : clampMinutes(restMinInput, 1, 60);
+    state.total = minutes * 60;
+    state.remaining = state.total;
+    render();
+  }
+
+  presetBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      focusMinInput.value = btn.getAttribute("data-focus");
+      restMinInput.value = btn.getAttribute("data-rest");
+      syncDurationsIfIdle();
+    });
+  });
+
+  document.querySelectorAll(".stepper button[data-step]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var target = document.getElementById(btn.getAttribute("data-target"));
+      var step = parseInt(btn.getAttribute("data-step"), 10);
+      var min = parseInt(target.min, 10);
+      var max = parseInt(target.max, 10);
+      var v = parseInt(target.value, 10) || min;
+      v = Math.max(min, Math.min(max, v + step));
+      target.value = v;
+      syncDurationsIfIdle();
+    });
+  });
+
+  [focusMinInput, restMinInput].forEach(function (input) {
+    input.addEventListener("change", syncDurationsIfIdle);
+  });
+
+  function formatTime(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+  }
+
+  function render() {
+    timeDisplay.textContent = formatTime(state.remaining);
+    var frac = state.total > 0 ? state.remaining / state.total : 0;
+    ringProgress.style.strokeDashoffset = CIRC * (1 - frac);
+    ringProgress.setAttribute("stroke", MODE_COLOR[state.mode]);
+    modeLabel.textContent = state.mode === "focus" ? "集中" : "休憩";
+    modeLabel.setAttribute("data-active", state.mode);
+    card.setAttribute("data-mode", state.mode);
+    timeSub.textContent = state.running ? (state.mode === "focus" ? "集中中" : "休憩中") : "開始前";
+    startBtn.textContent = state.running ? "一時停止" : (state.remaining === state.total ? "開始" : "再開");
+
+    if (state.running && state.mode === "rest") {
+      breakHint.textContent = state.hintText || "";
+      breakHint.hidden = false;
+    } else {
+      breakHint.hidden = true;
+    }
+  }
+
+  function tick() {
+    var msLeft = state.endAt - Date.now();
+    var secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+    if (secLeft <= 0) {
+      state.remaining = 0;
+      render();
+      playBell();
+      switchMode();
+      if (state.running) {
+        state.endAt = Date.now() + state.remaining * 1000;
+      }
+      return;
+    }
+    if (secLeft !== state.remaining) {
+      state.remaining = secLeft;
+      render();
+    }
+  }
+
+  function switchMode() {
+    state.mode = state.mode === "focus" ? "rest" : "focus";
+    var minutes = state.mode === "focus" ? clampMinutes(focusMinInput, 1, 180) : clampMinutes(restMinInput, 1, 60);
+    state.total = minutes * 60;
+    state.remaining = state.total;
+    if (state.mode === "rest") {
+      state.hintText = BREAK_MESSAGES[Math.floor(Math.random() * BREAK_MESSAGES.length)];
+    }
+    render();
+  }
+
+  function startPause() {
+    if (state.running) {
+      state.running = false;
+      clearInterval(state.tickId);
+      render();
+    } else {
+      state.running = true;
+      state.endAt = Date.now() + state.remaining * 1000;
+      state.tickId = setInterval(tick, 250);
+      render();
+    }
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && state.running) tick();
+  });
+
+  function reset() {
+    state.running = false;
+    clearInterval(state.tickId);
+    state.mode = "focus";
+    var minutes = clampMinutes(focusMinInput, 1, 180);
+    state.total = minutes * 60;
+    state.remaining = state.total;
+    render();
+  }
+
+  startBtn.addEventListener("click", startPause);
+  resetBtn.addEventListener("click", reset);
+
+  var audioCtx = null;
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playTemple() {
+    var ctx = getCtx();
+    var now = ctx.currentTime;
+    var partials = [1, 2.01, 2.99, 4.2];
+    var gains = [0.5, 0.22, 0.12, 0.06];
+    partials.forEach(function (mult, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 130 * mult;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(gains[i], now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + 3.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 3.3);
+    });
+  }
+
+  function playChime() {
+    var ctx = getCtx();
+    var now = ctx.currentTime;
+    [880, 1318.5].forEach(function (freq, i) {
+      var start = now + i * 0.16;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.35, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0005, start + 1.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 1.2);
+    });
+  }
+
+  function playBeep() {
+    var ctx = getCtx();
+    var now = ctx.currentTime;
+    for (var i = 0; i < 3; i++) {
+      var start = now + i * 0.22;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 990;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.3, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0005, start + 0.18);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.2);
+    }
+  }
+
+  function playMoktak() {
+    var ctx = getCtx();
+    var now = ctx.currentTime;
+    for (var i = 0; i < 2; i++) {
+      var start = now + i * 0.26;
+      var bufferSize = ctx.sampleRate * 0.06;
+      var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var j = 0; j < bufferSize; j++) {
+        data[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / bufferSize, 3);
+      }
+      var noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      var filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 700;
+      filter.Q.value = 1.2;
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.6, start);
+      gain.gain.exponentialRampToValueAtTime(0.0005, start + 0.15);
+      noise.connect(filter).connect(gain).connect(ctx.destination);
+      noise.start(start);
+    }
+  }
+
+  var SOUND_FN = { temple: playTemple, chime: playChime, beep: playBeep, moktak: playMoktak };
+
+  function playBell() {
+    var fn = SOUND_FN[soundSelect.value] || playChime;
+    try { fn(); } catch (e) {}
+  }
+
+  previewBtn.addEventListener("click", playBell);
+
+  updatePresetHighlight();
+  render();
+</script>
