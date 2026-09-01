@@ -2,7 +2,7 @@
 <title>間合い</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
   :root {
@@ -15,9 +15,9 @@
     --wood-soft: #ece1d0;
     --sage: #74886d;
     --sage-soft: #e2e8dd;
-    --tile: #333a42;
-    --tile-soft: #dfe2e4;
+    --knob-ring: #fffdf9;
     --shadow: 0 1px 2px rgba(43, 41, 36, 0.05), 0 16px 40px rgba(43, 41, 36, 0.08);
+    --knob-shadow: 0 2px 6px rgba(43, 41, 36, 0.35);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -31,9 +31,9 @@
       --wood-soft: #382d20;
       --sage: #9ab093;
       --sage-soft: #26302a;
-      --tile: #aab0b8;
-      --tile-soft: #2c3238;
+      --knob-ring: #2b2721;
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);
+      --knob-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
     }
   }
 
@@ -47,9 +47,9 @@
     --wood-soft: #382d20;
     --sage: #9ab093;
     --sage-soft: #26302a;
-    --tile: #aab0b8;
-    --tile-soft: #2c3238;
+    --knob-ring: #2b2721;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px rgba(0, 0, 0, 0.4);
+    --knob-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   }
 
   * { box-sizing: border-box; }
@@ -67,41 +67,106 @@
   }
 
   .card {
+    position: relative;
     width: 100%;
-    max-width: 420px;
+    max-width: 380px;
     background: var(--surface);
     border: 1px solid var(--surface-border);
-    border-radius: 24px;
+    border-radius: 28px;
     box-shadow: var(--shadow);
-    padding: 36px 32px 30px;
+    padding: 34px 28px 28px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 26px;
+    gap: 22px;
     transition: border-color 0.4s ease;
   }
 
   .card[data-mode="focus"] { border-color: color-mix(in srgb, var(--wood) 35%, var(--surface-border)); }
   .card[data-mode="rest"]  { border-color: color-mix(in srgb, var(--sage) 35%, var(--surface-border)); }
 
-  .mode-label {
-    font-family: "Zen Maru Gothic", sans-serif;
-    font-size: 13px;
-    letter-spacing: 0.18em;
-    color: var(--text-muted);
-    text-transform: uppercase;
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    background: var(--bg);
+    border-radius: 999px;
+    padding: 4px;
+    border: 1px solid var(--surface-border);
   }
 
-  .mode-label[data-active="focus"] { color: var(--wood); }
-  .mode-label[data-active="rest"]  { color: var(--sage); }
+  .tab-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .tab-btn svg { width: 16px; height: 16px; }
+
+  .tab-btn[data-active="true"] {
+    background: var(--surface);
+    color: var(--wood);
+    box-shadow: 0 1px 3px rgba(43, 41, 36, 0.12);
+  }
+
+  .tab-btn:focus-visible { outline: 2px solid var(--wood); outline-offset: 2px; }
+
+  .top-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--surface-border);
+    background: var(--bg);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  }
+
+  .icon-btn:active { transform: scale(0.92); }
+  .icon-btn:hover { color: var(--text); background: var(--wood-soft); }
+  .icon-btn:focus-visible { outline: 2px solid var(--wood); outline-offset: 2px; }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .mode-dot[hidden] { visibility: hidden; }
+
+  .mode-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--wood);
+    transition: background 0.4s ease;
+  }
+
+  .card[data-mode="rest"] .mode-dot { background: var(--sage); }
 
   .ring-wrap {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 236px;
+    height: 236px;
+    touch-action: none;
+    cursor: pointer;
   }
 
-  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-wrap svg { transform: rotate(-90deg); display: block; }
 
   .ring-track { fill: none; stroke: var(--surface-border); stroke-width: 10; }
 
@@ -109,8 +174,19 @@
     fill: none;
     stroke-width: 10;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease;
+    transition: stroke 0.4s ease;
   }
+
+  .ring-progress.animated { transition: stroke-dashoffset 0.3s linear, stroke 0.4s ease; }
+
+  .ring-knob {
+    fill: var(--knob-ring);
+    stroke: var(--wood);
+    stroke-width: 3;
+    filter: drop-shadow(var(--knob-shadow));
+  }
+
+  .card[data-mode="rest"] .ring-knob { stroke: var(--sage); }
 
   .ring-center {
     position: absolute;
@@ -119,94 +195,122 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
+    pointer-events: none;
   }
 
   .time-display {
-    font-size: 46px;
+    font-size: 52px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+    line-height: 1;
   }
 
-  .time-sub {
-    font-size: 12px;
-    color: var(--text-muted);
+  .play-icon {
+    width: 0;
+    height: 0;
+    margin-left: 6px;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 24px solid var(--wood);
+  }
+
+  .card[data-mode="rest"] .play-icon { border-left-color: var(--sage); }
+
+  .pause-icon {
+    display: flex;
+    gap: 7px;
+  }
+
+  .pause-icon span {
+    width: 8px;
+    height: 30px;
+    border-radius: 3px;
+    background: var(--wood);
+  }
+
+  .card[data-mode="rest"] .pause-icon span { background: var(--sage); }
+
+  #timerView, #counterView {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+  }
+
+  .counter-circle {
+    width: 236px;
+    height: 236px;
+    border-radius: 50%;
+    border: 1px solid var(--surface-border);
+    background: var(--bg);
+    box-shadow: inset 0 0 0 10px var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.08s ease, background 0.15s ease;
+    font-family: inherit;
+  }
+
+  .counter-circle:active { transform: scale(0.98); }
+  .counter-circle:hover { background: var(--wood-soft); }
+  .counter-circle:focus-visible { outline: 2px solid var(--wood); outline-offset: 4px; }
+
+  .counter-value {
+    font-size: 64px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--wood);
+  }
+
+  .counter-controls {
+    display: flex;
+    justify-content: center;
+  }
+
+  .counter-minus {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
   }
 
   .break-hint {
-    margin: -10px 0 0;
+    min-height: 28px;
     font-size: 13px;
     color: var(--sage);
     background: var(--sage-soft);
-    padding: 7px 16px;
+    padding: 6px 16px;
     border-radius: 999px;
     text-align: center;
   }
 
-  .controls {
-    display: flex;
-    gap: 10px;
-  }
-
-  .presets-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .preset-btn {
-    font-size: 12.5px;
-    padding: 7px 14px;
-  }
-
-  .preset-btn[data-active="true"] {
-    background: var(--wood-soft);
-    border-color: var(--wood);
-    color: var(--wood);
-  }
-
-  button {
-    font-family: inherit;
-    cursor: pointer;
-    border-radius: 999px;
-    border: 1px solid var(--surface-border);
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 22px;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
-  }
-
-  button:active { transform: scale(0.96); }
-
-  button:focus-visible { outline: 2px solid var(--wood); outline-offset: 2px; }
-
-  .btn-primary {
-    background: var(--wood);
-    border-color: var(--wood);
-    color: var(--surface);
-  }
-
-  .btn-primary:hover { background: color-mix(in srgb, var(--wood) 85%, black); }
-
-  .btn-secondary:hover { background: var(--wood-soft); }
+  .break-hint[hidden] { visibility: hidden; }
 
   .settings {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding-top: 8px;
+    padding-top: 18px;
     border-top: 1px dashed var(--surface-border);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease, border-color 0.3s ease;
+  }
+
+  .settings[data-open="true"] {
+    max-height: 320px;
+    opacity: 1;
+  }
+
+  .settings[data-open="false"] {
+    padding-top: 0;
+    border-color: transparent;
   }
 
   .field-row {
@@ -221,145 +325,202 @@
     color: var(--text-muted);
   }
 
-  .stepper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .presets-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+
+  button.chip {
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 999px;
+    border: 1px solid var(--surface-border);
+    background: transparent;
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 7px 14px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
 
+  button.chip:hover { background: var(--wood-soft); }
+
+  button.chip[data-active="true"] {
+    background: var(--wood-soft);
+    border-color: var(--wood);
+    color: var(--wood);
+  }
+
+  .stepper { display: flex; align-items: center; gap: 10px; }
+
   .stepper button {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     padding: 0;
     border-radius: 8px;
     font-size: 15px;
     line-height: 1;
+    border: 1px solid var(--surface-border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
+  .stepper button:hover { background: var(--wood-soft); }
+
   .stepper input {
-    width: 46px;
+    width: 42px;
     text-align: center;
     font-family: inherit;
     font-variant-numeric: tabular-nums;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     border: 1px solid var(--surface-border);
     border-radius: 8px;
     background: var(--bg);
     color: var(--text);
-    padding: 5px 4px;
+    padding: 4px;
   }
-
-  .stepper input:focus-visible { outline: 2px solid var(--wood); outline-offset: 1px; }
 
   select {
     font-family: inherit;
-    font-size: 13.5px;
+    font-size: 13px;
     color: var(--text);
     background: var(--bg);
     border: 1px solid var(--surface-border);
     border-radius: 8px;
-    padding: 6px 10px;
+    padding: 6px 8px;
   }
 
-  .sound-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .preview-btn {
-    padding: 6px 12px;
-    font-size: 12.5px;
-  }
+  .sound-row { display: flex; align-items: center; gap: 8px; }
 
   @media (prefers-reduced-motion: reduce) {
-    .ring-progress { transition: none; }
+    .ring-progress, .settings { transition: none; }
   }
 </style>
 
 <div class="card" id="card" data-mode="focus">
-  <p class="mode-label" id="modeLabel" data-active="focus">集中</p>
+  <div class="tab-bar">
+    <button class="tab-btn" id="tabTimer" data-active="true" aria-label="タイマー" title="タイマー">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l3 2"></path><path d="M9 2h6"></path></svg>
+    </button>
+    <button class="tab-btn" id="tabCounter" data-active="false" aria-label="カウンター" title="カウンター">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+    </button>
+  </div>
 
-  <div class="ring-wrap">
-    <svg width="240" height="240" viewBox="0 0 240 240">
-      <circle class="ring-track" cx="120" cy="120" r="104"></circle>
-      <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="104" stroke="#93704b"></circle>
-    </svg>
-    <div class="ring-center">
-      <div class="time-display" id="timeDisplay">25:00</div>
-      <div class="time-sub" id="timeSub">開始前</div>
+  <div class="top-row">
+    <button class="icon-btn reset-btn" id="resetBtn" aria-label="リセット" title="リセット">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+    </button>
+    <span class="mode-dot" id="modeDot"></span>
+    <button class="icon-btn settings-btn" id="settingsBtn" aria-label="設定" title="設定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+  </div>
+
+  <div id="timerView">
+    <div class="ring-wrap" id="ringWrap">
+      <svg width="236" height="236" viewBox="0 0 236 236">
+        <circle class="ring-track" cx="118" cy="118" r="102"></circle>
+        <circle class="ring-progress" id="ringProgress" cx="118" cy="118" r="102"></circle>
+        <circle class="ring-knob" id="ringKnob" cx="118" cy="16" r="9"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="time-display" id="timeDisplay">25</div>
+        <div class="play-icon" id="playIcon"></div>
+      </div>
+    </div>
+
+    <p class="break-hint" id="breakHint" hidden></p>
+
+    <div class="settings" id="settings" data-open="false">
+      <div class="field-row presets-row">
+        <span class="field-label">プリセット</span>
+        <div class="presets">
+          <button class="chip" data-focus="90" data-rest="20">深い集中 90/20</button>
+          <button class="chip" data-focus="25" data-rest="5">浅い集中 25/5</button>
+          <button class="chip" data-focus="52" data-rest="17">52/17</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <span class="field-label">休憩時間（分）</span>
+        <div class="stepper">
+          <button data-step="-1" data-target="restMin" aria-label="休憩時間を減らす">−</button>
+          <input type="number" id="restMin" value="5" min="1" max="60" inputmode="numeric">
+          <button data-step="1" data-target="restMin" aria-label="休憩時間を増やす">＋</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <span class="field-label">ベル音</span>
+        <div class="sound-row">
+          <select id="soundSelect">
+            <option value="temple">鐘（低く長い余韻）</option>
+            <option value="chime" selected>チャイム（澄んだ音）</option>
+            <option value="beep">シンプルビープ</option>
+            <option value="moktak">木魚（乾いた音）</option>
+          </select>
+          <button class="chip" id="previewBtn">試聴</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <p class="break-hint" id="breakHint" hidden></p>
+  <div id="counterView" hidden>
+    <button class="counter-circle" id="counterCircle" aria-label="カウントを増やす" title="タップで+1">
+      <span class="counter-value" id="counterValue">0</span>
+    </button>
 
-  <div class="controls">
-    <button class="btn-primary" id="startBtn">開始</button>
-    <button class="btn-secondary" id="resetBtn">リセット</button>
-  </div>
+    <div class="counter-controls">
+      <button class="icon-btn counter-minus" id="counterMinus" aria-label="1減らす" title="1減らす">−</button>
+    </div>
 
-  <div class="settings">
-    <div class="field-row presets-row">
-      <span class="field-label">プリセット</span>
-      <div class="presets">
-        <button class="btn-secondary preset-btn" data-focus="90" data-rest="20">深い集中 90/20</button>
-        <button class="btn-secondary preset-btn" data-focus="25" data-rest="5">浅い集中 25/5</button>
-        <button class="btn-secondary preset-btn" data-focus="52" data-rest="17">52/17</button>
-      </div>
-    </div>
-    <div class="field-row">
-      <span class="field-label">集中時間（分）</span>
-      <div class="stepper">
-        <button data-step="-1" data-target="focusMin" aria-label="集中時間を減らす">−</button>
-        <input type="number" id="focusMin" value="25" min="1" max="180" inputmode="numeric">
-        <button data-step="1" data-target="focusMin" aria-label="集中時間を増やす">＋</button>
-      </div>
-    </div>
-    <div class="field-row">
-      <span class="field-label">休憩時間（分）</span>
-      <div class="stepper">
-        <button data-step="-1" data-target="restMin" aria-label="休憩時間を減らす">−</button>
-        <input type="number" id="restMin" value="5" min="1" max="60" inputmode="numeric">
-        <button data-step="1" data-target="restMin" aria-label="休憩時間を増やす">＋</button>
-      </div>
-    </div>
-    <div class="field-row">
-      <span class="field-label">ベル音</span>
-      <div class="sound-row">
-        <select id="soundSelect">
-          <option value="temple">鐘（低く長い余韻）</option>
-          <option value="chime" selected>チャイム（澄んだ音）</option>
-          <option value="beep">シンプルビープ</option>
-          <option value="moktak">木魚（乾いた音）</option>
-        </select>
-        <button class="btn-secondary preview-btn" id="previewBtn">試聴</button>
+    <div class="settings" id="counterSettings" data-open="false">
+      <div class="field-row">
+        <span class="field-label">増減幅</span>
+        <div class="stepper">
+          <button data-step="-1" data-target="counterStep" aria-label="増減幅を減らす">−</button>
+          <input type="number" id="counterStep" value="1" min="1" max="1000" inputmode="numeric">
+          <button data-step="1" data-target="counterStep" aria-label="増減幅を増やす">＋</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  var CIRC = 2 * Math.PI * 104;
-  var ringProgress = document.getElementById("ringProgress");
-  ringProgress.style.strokeDasharray = CIRC;
-  ringProgress.style.strokeDashoffset = 0;
+  var R = 102;
+  var CIRC = 2 * Math.PI * R;
+  var MAX_FOCUS_MIN = 90;
 
   var card = document.getElementById("card");
-  var modeLabel = document.getElementById("modeLabel");
+  var modeDot = document.getElementById("modeDot");
+  var ringWrap = document.getElementById("ringWrap");
+  var ringProgress = document.getElementById("ringProgress");
+  var ringKnob = document.getElementById("ringKnob");
   var timeDisplay = document.getElementById("timeDisplay");
-  var timeSub = document.getElementById("timeSub");
-  var startBtn = document.getElementById("startBtn");
+  var playIcon = document.getElementById("playIcon");
   var resetBtn = document.getElementById("resetBtn");
-  var focusMinInput = document.getElementById("focusMin");
+  var settingsBtn = document.getElementById("settingsBtn");
+  var settingsPanel = document.getElementById("settings");
   var restMinInput = document.getElementById("restMin");
   var soundSelect = document.getElementById("soundSelect");
   var previewBtn = document.getElementById("previewBtn");
   var breakHint = document.getElementById("breakHint");
-  var presetBtns = document.querySelectorAll(".preset-btn");
+  var presetBtns = document.querySelectorAll(".chip[data-focus]");
+  var tabTimer = document.getElementById("tabTimer");
+  var tabCounter = document.getElementById("tabCounter");
+  var timerView = document.getElementById("timerView");
+  var counterView = document.getElementById("counterView");
+  var counterCircle = document.getElementById("counterCircle");
+  var counterValue = document.getElementById("counterValue");
+  var counterMinus = document.getElementById("counterMinus");
+  var counterSettings = document.getElementById("counterSettings");
+  var counterStepInput = document.getElementById("counterStep");
+
+  ringProgress.style.strokeDasharray = CIRC;
 
   var BREAK_MESSAGES = [
     "画面から離れて、遠くを見る",
@@ -375,78 +536,80 @@
   var state = {
     mode: "focus",
     running: false,
+    focusMin: 25,
+    restMin: 5,
     remaining: 25 * 60,
     total: 25 * 60,
-    tickId: null
+    tickId: null,
+    endAt: 0,
+    hintText: ""
   };
 
-  function clampMinutes(input, min, max) {
-    var v = parseInt(input.value, 10);
+  var activeTab = "timer";
+
+  var counterState = { count: 0, step: 1 };
+
+  function loadCounter() {
+    try {
+      var saved = JSON.parse(localStorage.getItem("maai-counter") || "null");
+      if (saved && typeof saved.count === "number") counterState.count = saved.count;
+      if (saved && typeof saved.step === "number") counterState.step = saved.step;
+    } catch (e) {}
+  }
+
+  function saveCounter() {
+    try {
+      localStorage.setItem("maai-counter", JSON.stringify(counterState));
+    } catch (e) {}
+  }
+
+  function clampInt(v, min, max) {
+    v = parseInt(v, 10);
     if (isNaN(v)) v = min;
-    v = Math.max(min, Math.min(max, v));
-    input.value = v;
-    return v;
+    return Math.max(min, Math.min(max, v));
   }
 
-  function updatePresetHighlight() {
-    var f = parseInt(focusMinInput.value, 10);
-    var r = parseInt(restMinInput.value, 10);
-    presetBtns.forEach(function (btn) {
-      var match = parseInt(btn.getAttribute("data-focus"), 10) === f && parseInt(btn.getAttribute("data-rest"), 10) === r;
-      btn.setAttribute("data-active", match ? "true" : "false");
-    });
+  function setArc(fraction, animated) {
+    fraction = Math.max(0, Math.min(1, fraction));
+    ringProgress.classList.toggle("animated", !!animated);
+    ringProgress.style.strokeDashoffset = CIRC * (1 - fraction);
+    var angle = fraction * 2 * Math.PI - Math.PI / 2;
+    var cx = 118 + Math.cos(angle) * R;
+    var cy = 118 + Math.sin(angle) * R;
+    ringKnob.setAttribute("cx", cx);
+    ringKnob.setAttribute("cy", cy);
   }
 
-  function syncDurationsIfIdle() {
-    updatePresetHighlight();
-    if (state.running) return;
-    var minutes = state.mode === "focus" ? clampMinutes(focusMinInput, 1, 180) : clampMinutes(restMinInput, 1, 60);
-    state.total = minutes * 60;
-    state.remaining = state.total;
-    render();
-  }
-
-  presetBtns.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      focusMinInput.value = btn.getAttribute("data-focus");
-      restMinInput.value = btn.getAttribute("data-rest");
-      syncDurationsIfIdle();
-    });
-  });
-
-  document.querySelectorAll(".stepper button[data-step]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var target = document.getElementById(btn.getAttribute("data-target"));
-      var step = parseInt(btn.getAttribute("data-step"), 10);
-      var min = parseInt(target.min, 10);
-      var max = parseInt(target.max, 10);
-      var v = parseInt(target.value, 10) || min;
-      v = Math.max(min, Math.min(max, v + step));
-      target.value = v;
-      syncDurationsIfIdle();
-    });
-  });
-
-  [focusMinInput, restMinInput].forEach(function (input) {
-    input.addEventListener("change", syncDurationsIfIdle);
-  });
-
-  function formatTime(sec) {
+  function formatClock(sec) {
     var m = Math.floor(sec / 60);
     var s = sec % 60;
     return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
   }
 
+  function updatePresetHighlight() {
+    presetBtns.forEach(function (btn) {
+      var match = parseInt(btn.getAttribute("data-focus"), 10) === state.focusMin &&
+        parseInt(btn.getAttribute("data-rest"), 10) === state.restMin;
+      btn.setAttribute("data-active", match ? "true" : "false");
+    });
+  }
+
   function render() {
-    timeDisplay.textContent = formatTime(state.remaining);
-    var frac = state.total > 0 ? state.remaining / state.total : 0;
-    ringProgress.style.strokeDashoffset = CIRC * (1 - frac);
     ringProgress.setAttribute("stroke", MODE_COLOR[state.mode]);
-    modeLabel.textContent = state.mode === "focus" ? "集中" : "休憩";
-    modeLabel.setAttribute("data-active", state.mode);
+
+    if (state.running) {
+      timeDisplay.textContent = formatClock(state.remaining);
+      setArc(state.remaining / state.total, true);
+    } else {
+      timeDisplay.textContent = String(state.mode === "focus" ? state.focusMin : state.restMin);
+      var frac = state.mode === "focus" ? state.focusMin / MAX_FOCUS_MIN : state.restMin / 60;
+      setArc(frac, false);
+    }
+
+    playIcon.className = state.running ? "pause-icon" : "play-icon";
+    playIcon.innerHTML = state.running ? "<span></span><span></span>" : "";
+
     card.setAttribute("data-mode", state.mode);
-    timeSub.textContent = state.running ? (state.mode === "focus" ? "集中中" : "休憩中") : "開始前";
-    startBtn.textContent = state.running ? "一時停止" : (state.remaining === state.total ? "開始" : "再開");
 
     if (state.running && state.mode === "rest") {
       breakHint.textContent = state.hintText || "";
@@ -464,9 +627,7 @@
       render();
       playBell();
       switchMode();
-      if (state.running) {
-        state.endAt = Date.now() + state.remaining * 1000;
-      }
+      if (state.running) state.endAt = Date.now() + state.remaining * 1000;
       return;
     }
     if (secLeft !== state.remaining) {
@@ -477,7 +638,7 @@
 
   function switchMode() {
     state.mode = state.mode === "focus" ? "rest" : "focus";
-    var minutes = state.mode === "focus" ? clampMinutes(focusMinInput, 1, 180) : clampMinutes(restMinInput, 1, 60);
+    var minutes = state.mode === "focus" ? state.focusMin : state.restMin;
     state.total = minutes * 60;
     state.remaining = state.total;
     if (state.mode === "rest") {
@@ -491,30 +652,211 @@
       state.running = false;
       clearInterval(state.tickId);
       render();
-    } else {
-      state.running = true;
-      state.endAt = Date.now() + state.remaining * 1000;
-      state.tickId = setInterval(tick, 250);
-      render();
+      return;
     }
+    var minutes = state.mode === "focus" ? state.focusMin : state.restMin;
+    state.total = minutes * 60;
+    state.remaining = state.total;
+    state.running = true;
+    state.endAt = Date.now() + state.remaining * 1000;
+    state.tickId = setInterval(tick, 250);
+    render();
+  }
+
+  function reset() {
+    state.running = false;
+    clearInterval(state.tickId);
+    state.mode = "focus";
+    state.total = state.focusMin * 60;
+    state.remaining = state.total;
+    render();
   }
 
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && state.running) tick();
   });
 
-  function reset() {
-    state.running = false;
-    clearInterval(state.tickId);
-    state.mode = "focus";
-    var minutes = clampMinutes(focusMinInput, 1, 180);
-    state.total = minutes * 60;
-    state.remaining = state.total;
-    render();
+  ringWrap.addEventListener("click", function (e) {
+    if (draggedThisGesture) { draggedThisGesture = false; return; }
+    startPause();
+  });
+
+  resetBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (activeTab === "counter") {
+      counterState.count = 0;
+      saveCounter();
+      renderCounter();
+    } else {
+      reset();
+    }
+  });
+
+  settingsBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var panel = activeTab === "counter" ? counterSettings : settingsPanel;
+    var open = panel.getAttribute("data-open") === "true";
+    panel.setAttribute("data-open", open ? "false" : "true");
+  });
+
+  // --- Tab switching ---
+  function setActiveTab(tab) {
+    activeTab = tab;
+    tabTimer.setAttribute("data-active", tab === "timer" ? "true" : "false");
+    tabCounter.setAttribute("data-active", tab === "counter" ? "true" : "false");
+    timerView.hidden = tab !== "timer";
+    counterView.hidden = tab !== "counter";
+    modeDot.hidden = tab !== "timer";
+    settingsPanel.setAttribute("data-open", "false");
+    counterSettings.setAttribute("data-open", "false");
+    if (tab === "counter") renderCounter();
   }
 
-  startBtn.addEventListener("click", startPause);
-  resetBtn.addEventListener("click", reset);
+  tabTimer.addEventListener("click", function () { setActiveTab("timer"); });
+  tabCounter.addEventListener("click", function () { setActiveTab("counter"); });
+
+  // --- Counter ---
+  function renderCounter() {
+    counterValue.textContent = String(counterState.count);
+  }
+
+  function counterIncrement() {
+    counterState.count += counterState.step;
+    saveCounter();
+    renderCounter();
+  }
+
+  function counterDecrement() {
+    counterState.count -= counterState.step;
+    saveCounter();
+    renderCounter();
+  }
+
+  counterCircle.addEventListener("click", counterIncrement);
+  counterMinus.addEventListener("click", function (e) {
+    e.stopPropagation();
+    counterDecrement();
+  });
+
+  counterStepInput.addEventListener("change", function () {
+    counterState.step = clampInt(counterStepInput.value, 1, 1000);
+    counterStepInput.value = counterState.step;
+    saveCounter();
+  });
+
+  document.querySelectorAll('.stepper button[data-target="counterStep"]').forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var step = parseInt(btn.getAttribute("data-step"), 10);
+      counterState.step = clampInt(counterState.step + step, 1, 1000);
+      counterStepInput.value = counterState.step;
+      saveCounter();
+    });
+  });
+
+  counterStepInput.addEventListener("click", function (e) { e.stopPropagation(); });
+
+  document.addEventListener("keydown", function (e) {
+    if (activeTab !== "counter") return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      counterIncrement();
+    } else if (e.key === "ArrowDown" || e.key === "Backspace") {
+      e.preventDefault();
+      counterDecrement();
+    }
+  });
+
+  loadCounter();
+
+  // --- Drag-to-set (focus dial), physical-timer style ---
+  var dragging = false;
+  var draggedThisGesture = false;
+
+  function angleToMinutes(clientX, clientY) {
+    var rect = ringWrap.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var dx = clientX - cx;
+    var dy = clientY - cy;
+    var angle = Math.atan2(dy, dx) + Math.PI / 2;
+    if (angle < 0) angle += 2 * Math.PI;
+    var fraction = angle / (2 * Math.PI);
+    return clampInt(Math.round(fraction * MAX_FOCUS_MIN), 1, MAX_FOCUS_MIN);
+  }
+
+  ringWrap.addEventListener("pointerdown", function (e) {
+    if (state.running) return;
+    dragging = true;
+    draggedThisGesture = false;
+    ringWrap.setPointerCapture(e.pointerId);
+  });
+
+  ringWrap.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    draggedThisGesture = true;
+    var minutes = angleToMinutes(e.clientX, e.clientY);
+    if (state.mode === "focus") {
+      state.focusMin = minutes;
+      updatePresetHighlight();
+      render();
+    }
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+  }
+
+  ringWrap.addEventListener("pointerup", endDrag);
+  ringWrap.addEventListener("pointercancel", endDrag);
+
+  presetBtns.forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      state.focusMin = clampInt(btn.getAttribute("data-focus"), 1, MAX_FOCUS_MIN);
+      state.restMin = clampInt(btn.getAttribute("data-rest"), 1, 60);
+      restMinInput.value = state.restMin;
+      if (!state.running) {
+        var minutes = state.mode === "focus" ? state.focusMin : state.restMin;
+        state.total = minutes * 60;
+        state.remaining = state.total;
+      }
+      updatePresetHighlight();
+      render();
+    });
+  });
+
+  document.querySelectorAll(".stepper button[data-step]").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var step = parseInt(btn.getAttribute("data-step"), 10);
+      state.restMin = clampInt(state.restMin + step, 1, 60);
+      restMinInput.value = state.restMin;
+      updatePresetHighlight();
+      if (!state.running && state.mode === "rest") {
+        state.total = state.restMin * 60;
+        state.remaining = state.total;
+        render();
+      }
+    });
+  });
+
+  restMinInput.addEventListener("change", function () {
+    state.restMin = clampInt(restMinInput.value, 1, 60);
+    restMinInput.value = state.restMin;
+    updatePresetHighlight();
+    if (!state.running && state.mode === "rest") {
+      state.total = state.restMin * 60;
+      state.remaining = state.total;
+      render();
+    }
+  });
+
+  restMinInput.addEventListener("click", function (e) { e.stopPropagation(); });
+  soundSelect.addEventListener("click", function (e) { e.stopPropagation(); });
 
   var audioCtx = null;
   function getCtx() {
@@ -609,7 +951,13 @@
     try { fn(); } catch (e) {}
   }
 
-  previewBtn.addEventListener("click", playBell);
+  previewBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    playBell();
+  });
+
+  counterStepInput.value = counterState.step;
+  renderCounter();
 
   updatePresetHighlight();
   render();
