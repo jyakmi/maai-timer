@@ -78,13 +78,14 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--bg);
+    background: var(--body-bg, var(--bg));
     color: var(--text);
     font-family: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
+    transition: background 3s ease;
   }
 
   :root { --ring-size: 236px; }
@@ -375,6 +376,11 @@
     color: var(--text-muted);
   }
 
+  .field-label .hint {
+    font-size: 11px;
+    opacity: 0.75;
+  }
+
   .presets-row { flex-direction: column; align-items: flex-start; gap: 10px; }
 
   .presets { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
@@ -454,6 +460,141 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .switch-track {
+    position: absolute;
+    inset: 0;
+    background: var(--surface-border);
+    border-radius: 999px;
+    transition: background 0.2s ease;
+    pointer-events: none;
+  }
+
+  .switch-track::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface);
+    transition: transform 0.2s ease;
+  }
+
+  .switch input:checked + .switch-track { background: var(--wood); }
+  .switch input:checked + .switch-track::before { transform: translateX(16px); }
+  .switch input:focus-visible + .switch-track { outline: 2px solid var(--wood); outline-offset: 2px; }
+
+  .daylight-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--surface-border);
+  }
+
+  .daylight-status {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .latlon-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .latlon-row input {
+    width: 68px;
+    text-align: center;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    padding: 5px 4px;
+  }
+
+  .screensaver[hidden] { display: none; }
+
+  .screensaver {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: var(--body-bg, var(--bg));
+    transition: background 3s ease;
+    cursor: pointer;
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  .sky-arc {
+    position: absolute;
+    left: 50%;
+    top: 62%;
+    width: 86vmin;
+    height: 86vmin;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .sky-arc .body-dot {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 24px 6px currentColor;
+  }
+
+  .clock {
+    position: relative;
+    font-size: 15vmin;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .screensaver-hint {
+    position: relative;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body, .screensaver { transition: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ring-progress, .settings { transition: none; }
   }
@@ -524,6 +665,25 @@
         </div>
       </div>
       <p class="daily-stats" id="dailyStats">今日: 0回 ／ 0分</p>
+
+      <div class="field-row">
+        <span class="field-label">日照モード<span class="hint">（実験的）</span></span>
+        <label class="switch">
+          <input type="checkbox" id="daylightToggle">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="daylight-panel" id="daylightPanel" hidden>
+        <p class="daylight-status" id="daylightStatus">位置情報を確認中…</p>
+        <div class="field-row">
+          <span class="field-label">緯度・経度（手動調整）</span>
+          <div class="latlon-row">
+            <input type="number" id="latInput" step="0.01" inputmode="decimal">
+            <input type="number" id="lonInput" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        <button class="chip" id="screensaverBtn">全体表示（スクリーンセーバー）</button>
+      </div>
     </div>
   </div>
 
@@ -550,6 +710,12 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="screensaver" id="screensaver" hidden>
+  <div class="sky-arc" id="skyArc"></div>
+  <div class="clock" id="screensaverClock">--:--</div>
+  <p class="screensaver-hint">タップで戻る</p>
 </div>
 
 <script>
@@ -583,6 +749,15 @@
   var counterMinus = document.getElementById("counterMinus");
   var counterSettings = document.getElementById("counterSettings");
   var counterStepInput = document.getElementById("counterStep");
+  var daylightToggle = document.getElementById("daylightToggle");
+  var daylightPanel = document.getElementById("daylightPanel");
+  var daylightStatus = document.getElementById("daylightStatus");
+  var latInput = document.getElementById("latInput");
+  var lonInput = document.getElementById("lonInput");
+  var screensaverBtn = document.getElementById("screensaverBtn");
+  var screensaverEl = document.getElementById("screensaver");
+  var skyArc = document.getElementById("skyArc");
+  var screensaverClock = document.getElementById("screensaverClock");
 
   ringProgress.style.strokeDasharray = CIRC;
 
@@ -1185,6 +1360,293 @@
   });
 
   renderDailyStats();
+
+  // ==================== 日照モード ====================
+
+  var DAYLIGHT_RAD = Math.PI / 180;
+  var J1970 = 2440588, J2000 = 2451545, DAY_MS = 86400000;
+  var EARTH_OBLIQUITY = DAYLIGHT_RAD * 23.4397;
+
+  function toJulian(date) { return date.valueOf() / DAY_MS - 0.5 + J1970; }
+  function fromJulian(j) { return new Date((j + 0.5 - J1970) * DAY_MS); }
+  function toDays(date) { return toJulian(date) - J2000; }
+  function solarMeanAnomaly(d) { return DAYLIGHT_RAD * (357.5291 + 0.98560028 * d); }
+  function eclipticLongitude(M) {
+    var C = DAYLIGHT_RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+    var P = DAYLIGHT_RAD * 102.9372;
+    return M + C + P + Math.PI;
+  }
+  function declination(l) { return Math.asin(Math.sin(0) * Math.cos(EARTH_OBLIQUITY) + Math.cos(0) * Math.sin(EARTH_OBLIQUITY) * Math.sin(l)); }
+  function julianCycle(d, lw) { return Math.round(d - 0.0009 - lw / (2 * Math.PI)); }
+  function approxTransit(Ht, lw, n) { return 0.0009 + (Ht + lw) / (2 * Math.PI) + n; }
+  function solarTransitJ(ds, M, L) { return J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L); }
+  function hourAngle(h, phi, d) {
+    var cosH = (Math.sin(h) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d));
+    return Math.acos(Math.max(-1, Math.min(1, cosH)));
+  }
+
+  function getSunTimes(date, lat, lon) {
+    var lw = DAYLIGHT_RAD * -lon, phi = DAYLIGHT_RAD * lat, d = toDays(date);
+    var n = julianCycle(d, lw), ds = approxTransit(0, lw, n);
+    var M = solarMeanAnomaly(ds), L = eclipticLongitude(M);
+    var dec = declination(L);
+    var Jnoon = solarTransitJ(ds, M, L);
+    var h0 = DAYLIGHT_RAD * -0.833;
+    var w = hourAngle(h0, phi, dec);
+    var a = approxTransit(w, lw, n);
+    var Jset = solarTransitJ(a, M, L);
+    var Jrise = Jnoon - (Jset - Jnoon);
+    return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset), solarNoon: fromJulian(Jnoon) };
+  }
+
+  // rough per-timezone reference point (no external calls; used only as a fallback)
+  var TZ_LOCATIONS = {
+    "Asia/Seoul": [37.57, 126.98], "Asia/Tokyo": [35.68, 139.69],
+    "Asia/Shanghai": [31.23, 121.47], "Asia/Hong_Kong": [22.32, 114.17],
+    "Asia/Taipei": [25.03, 121.57], "Asia/Singapore": [1.35, 103.82],
+    "Asia/Kolkata": [28.61, 77.21], "Asia/Bangkok": [13.76, 100.5],
+    "Asia/Dubai": [25.2, 55.27], "Europe/London": [51.51, -0.13],
+    "Europe/Paris": [48.86, 2.35], "Europe/Berlin": [52.52, 13.4],
+    "Europe/Moscow": [55.76, 37.62], "America/New_York": [40.71, -74.01],
+    "America/Chicago": [41.88, -87.63], "America/Denver": [39.74, -104.99],
+    "America/Los_Angeles": [34.05, -118.24], "America/Sao_Paulo": [-23.55, -46.63],
+    "Australia/Sydney": [-33.87, 151.21], "Pacific/Auckland": [-36.85, 174.76]
+  };
+
+  var daylightState = { lat: null, lon: null, source: "", intervalId: null, screensaverIntervalId: null };
+
+  function loadDaylightPrefs() {
+    try {
+      var saved = JSON.parse(localStorage.getItem("maai-daylight") || "null");
+      return saved || {};
+    } catch (e) { return {}; }
+  }
+
+  function saveDaylightPrefs(patch) {
+    try {
+      var current = loadDaylightPrefs();
+      localStorage.setItem("maai-daylight", JSON.stringify(Object.assign(current, patch)));
+    } catch (e) {}
+  }
+
+  function resolveLocation(callback) {
+    var saved = loadDaylightPrefs();
+    if (typeof saved.lat === "number" && typeof saved.lon === "number" && saved.manual) {
+      callback(saved.lat, saved.lon, "手動入力");
+      return;
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          callback(pos.coords.latitude, pos.coords.longitude, "現在地");
+        },
+        function () { resolveByTimezone(callback); },
+        { timeout: 6000, maximumAge: 3600000 }
+      );
+    } else {
+      resolveByTimezone(callback);
+    }
+  }
+
+  function resolveByTimezone(callback) {
+    var tz = "";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+    if (TZ_LOCATIONS[tz]) {
+      callback(TZ_LOCATIONS[tz][0], TZ_LOCATIONS[tz][1], "タイムゾーンから推定（" + tz + "）");
+      return;
+    }
+    var offsetHours = -new Date().getTimezoneOffset() / 60;
+    var lon = Math.max(-180, Math.min(180, offsetHours * 15));
+    callback(35, lon, "PCの時刻設定からおおまかに推定");
+  }
+
+  function mixColor(c1, c2, t) {
+    var r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+    var g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+    var b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
+  var SKY_NIGHT = [26, 28, 38];
+  var SKY_DAWN = [247, 202, 178];
+  var SKY_DAY = [245, 241, 233];
+  var SKY_DUSK = [232, 170, 140];
+
+  function computeSky(now, lat, lon) {
+    var sun = getSunTimes(now, lat, lon);
+    var yesterday = new Date(now.getTime() - DAY_MS);
+    var tomorrow = new Date(now.getTime() + DAY_MS);
+    var sunPrev = getSunTimes(yesterday, lat, lon);
+    var sunNext = getSunTimes(tomorrow, lat, lon);
+
+    var t = now.getTime();
+    var twilight = 40 * 60 * 1000;
+    var sunrise = sun.sunrise.getTime(), sunset = sun.sunset.getTime();
+    var prevSunset = sunPrev.sunset.getTime(), nextSunrise = sunNext.sunrise.getTime();
+
+    var color, frac, phase, isDaytime;
+
+    if (t >= sunrise - twilight && t < sunrise + twilight) {
+      frac = (t - (sunrise - twilight)) / (twilight * 2);
+      color = mixColor(SKY_NIGHT, SKY_DAWN, Math.min(1, frac));
+      if (frac > 0.5) color = mixColor(SKY_DAWN, SKY_DAY, (frac - 0.5) * 2);
+      phase = "dawn"; isDaytime = frac > 0.5;
+    } else if (t >= sunrise + twilight && t < sunset - twilight) {
+      color = mixColor(SKY_DAY, SKY_DAY, 0);
+      phase = "day"; isDaytime = true;
+    } else if (t >= sunset - twilight && t < sunset + twilight) {
+      frac = (t - (sunset - twilight)) / (twilight * 2);
+      color = mixColor(SKY_DAY, SKY_DUSK, Math.min(1, frac));
+      if (frac > 0.5) color = mixColor(SKY_DUSK, SKY_NIGHT, (frac - 0.5) * 2);
+      phase = "dusk"; isDaytime = frac < 0.5;
+    } else {
+      color = mixColor(SKY_NIGHT, SKY_NIGHT, 0);
+      phase = "night"; isDaytime = false;
+    }
+
+    // sun/moon arc progress 0..1 across the current daytime/nighttime span
+    var arcFrac;
+    if (isDaytime) {
+      arcFrac = (t - sunrise) / Math.max(1, sunset - sunrise);
+    } else if (t < sunrise) {
+      arcFrac = (t - prevSunset) / Math.max(1, sunrise - prevSunset);
+    } else {
+      arcFrac = (t - sunset) / Math.max(1, nextSunrise - sunset);
+    }
+    arcFrac = Math.max(0, Math.min(1, arcFrac));
+
+    return { color: color, phase: phase, isDaytime: isDaytime, arcFrac: arcFrac, sun: sun };
+  }
+
+  function applyDaylight() {
+    if (daylightState.lat === null) return;
+    var sky = computeSky(new Date(), daylightState.lat, daylightState.lon);
+    document.documentElement.style.setProperty("--body-bg", sky.color);
+    var phaseLabel = { dawn: "朝焼け", day: "昼", dusk: "夕焼け", night: "夜" }[sky.phase];
+    daylightStatus.textContent = daylightState.source + " ／ 今: " + phaseLabel +
+      "（日の出 " + formatClock2(sky.sun.sunrise) + " ・ 日の入り " + formatClock2(sky.sun.sunset) + "）";
+    renderScreensaver(sky);
+  }
+
+  function formatClock2(d) {
+    var h = d.getHours(), m = d.getMinutes();
+    return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+  }
+
+  function renderScreensaver(sky) {
+    if (screensaverEl.hidden) return;
+    var angle = Math.PI - sky.arcFrac * Math.PI; // right-to-left arc, high at midpoint
+    var cx = 50 + Math.cos(angle) * 42;
+    var cy = 50 - Math.sin(angle) * 42;
+    var dot = skyArc.querySelector(".body-dot");
+    if (!dot) {
+      dot = document.createElement("div");
+      dot.className = "body-dot";
+      skyArc.appendChild(dot);
+    }
+    dot.style.left = cx + "%";
+    dot.style.top = cy + "%";
+    dot.style.color = sky.isDaytime ? "#e8b26a" : "#c9d3e8";
+    dot.style.background = sky.isDaytime ? "#f4c67a" : "#dbe3f2";
+    screensaverClock.textContent = formatClock2(new Date());
+  }
+
+  function startDaylightLoop() {
+    stopDaylightLoop();
+    applyDaylight();
+    daylightState.intervalId = setInterval(applyDaylight, 60000);
+  }
+
+  function stopDaylightLoop() {
+    if (daylightState.intervalId) clearInterval(daylightState.intervalId);
+    daylightState.intervalId = null;
+  }
+
+  function enableDaylight() {
+    var prefs = loadDaylightPrefs();
+    if (typeof prefs.lat === "number" && typeof prefs.lon === "number") {
+      daylightState.lat = prefs.lat;
+      daylightState.lon = prefs.lon;
+      daylightState.source = prefs.manual ? "手動入力" : (prefs.source || "保存済みの位置");
+      latInput.value = prefs.lat;
+      lonInput.value = prefs.lon;
+      startDaylightLoop();
+    }
+    daylightStatus.textContent = "位置情報を確認中…";
+    resolveLocation(function (lat, lon, source) {
+      daylightState.lat = lat;
+      daylightState.lon = lon;
+      daylightState.source = source;
+      latInput.value = Math.round(lat * 100) / 100;
+      lonInput.value = Math.round(lon * 100) / 100;
+      saveDaylightPrefs({ lat: lat, lon: lon, source: source, manual: source === "手動入力" });
+      startDaylightLoop();
+    });
+  }
+
+  function disableDaylight() {
+    stopDaylightLoop();
+    document.documentElement.style.removeProperty("--body-bg");
+  }
+
+  daylightToggle.addEventListener("change", function () {
+    daylightPanel.hidden = !daylightToggle.checked;
+    if (daylightToggle.checked) {
+      enableDaylight();
+    } else {
+      disableDaylight();
+      closeScreensaver();
+    }
+  });
+
+  function applyManualLocation() {
+    var lat = parseFloat(latInput.value);
+    var lon = parseFloat(lonInput.value);
+    if (isNaN(lat) || isNaN(lon)) return;
+    daylightState.lat = lat;
+    daylightState.lon = lon;
+    daylightState.source = "手動入力";
+    saveDaylightPrefs({ lat: lat, lon: lon, source: "手動入力", manual: true });
+    applyDaylight();
+  }
+
+  latInput.addEventListener("change", applyManualLocation);
+  lonInput.addEventListener("change", applyManualLocation);
+  latInput.addEventListener("click", function (e) { e.stopPropagation(); });
+  lonInput.addEventListener("click", function (e) { e.stopPropagation(); });
+
+  function openScreensaver() {
+    if (daylightState.lat === null) return;
+    screensaverEl.hidden = false;
+    applyDaylight();
+    daylightState.screensaverIntervalId = setInterval(applyDaylight, 1000);
+  }
+
+  function closeScreensaver() {
+    screensaverEl.hidden = true;
+    if (daylightState.screensaverIntervalId) clearInterval(daylightState.screensaverIntervalId);
+    daylightState.screensaverIntervalId = null;
+  }
+
+  screensaverBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    openScreensaver();
+  });
+  screensaverEl.addEventListener("click", closeScreensaver);
+
+  // restore saved daylight preference on load
+  (function initDaylight() {
+    var prefs = loadDaylightPrefs();
+    if (prefs.enabled) {
+      daylightToggle.checked = true;
+      daylightPanel.hidden = false;
+      enableDaylight();
+    }
+  })();
+
+  daylightToggle.addEventListener("change", function () {
+    saveDaylightPrefs({ enabled: daylightToggle.checked });
+  });
 
   counterStepInput.value = counterState.step;
   renderCounter();
