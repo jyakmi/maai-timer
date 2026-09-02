@@ -1060,20 +1060,15 @@
     try {
       var ctx = getCtx();
       var now = ctx.currentTime;
+      var pitch = up ? 1 : 0.82;
 
-      // sharp mechanical "kachi" transient
-      noiseBurst(ctx, now, 0.012, "highpass", up ? 2600 : 1500, 0.3, 0.015);
+      // 1st transient: the button/lever strike — sharp, broadband, very short
+      noiseBurst(ctx, now, 0.006, "bandpass", 4200 * pitch, 0.5, 0.01);
+      noiseBurst(ctx, now, 0.004, "highpass", 5500, 0.18, 0.006);
 
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.type = "square";
-      osc.frequency.value = up ? 1600 : 620;
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.003);
-      gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.03);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.04);
+      // 2nd transient: the ratchet/gear catching a beat later — slightly softer, lower
+      var t2 = now + 0.014;
+      noiseBurst(ctx, t2, 0.008, "bandpass", 2100 * pitch, 0.32, 0.014);
     } catch (e) {}
   }
 
