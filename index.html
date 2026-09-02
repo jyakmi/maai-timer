@@ -193,7 +193,7 @@
     cursor: pointer;
   }
 
-  .ring-wrap svg { transform: rotate(-90deg); display: block; width: 100%; height: 100%; }
+  .ring-dial-svg { transform: rotate(-90deg); display: block; width: 100%; height: 100%; }
 
   .ring-track { fill: none; stroke: var(--surface-border); stroke-width: 10; }
 
@@ -234,29 +234,18 @@
     line-height: 1;
   }
 
-  .play-icon {
-    width: 0;
-    height: 0;
-    border-top: 15px solid transparent;
-    border-bottom: 15px solid transparent;
-    border-left: 24px solid var(--wood);
-  }
-
-  .card[data-mode="rest"] .play-icon { border-left-color: var(--sage); }
-
-  .pause-icon {
+  .transport-icon {
+    width: 32px;
+    height: 32px;
     display: flex;
-    gap: 7px;
+    align-items: center;
+    justify-content: center;
+    color: var(--wood);
   }
 
-  .pause-icon span {
-    width: 8px;
-    height: 30px;
-    border-radius: 3px;
-    background: var(--wood);
-  }
+  .transport-icon svg { width: 100%; height: 100%; }
 
-  .card[data-mode="rest"] .pause-icon span { background: var(--sage); }
+  .card[data-mode="rest"] .transport-icon { color: var(--sage); }
 
   #timerView, #counterView {
     display: flex;
@@ -492,14 +481,14 @@
 
   <div id="timerView">
     <div class="ring-wrap" id="ringWrap">
-      <svg width="236" height="236" viewBox="0 0 236 236">
+      <svg class="ring-dial-svg" width="236" height="236" viewBox="0 0 236 236">
         <circle class="ring-track" cx="118" cy="118" r="102"></circle>
         <circle class="ring-progress" id="ringProgress" cx="118" cy="118" r="102"></circle>
         <circle class="ring-knob" id="ringKnob" cx="118" cy="16" r="9"></circle>
       </svg>
       <div class="ring-center">
         <div class="time-display" id="timeDisplay">25</div>
-        <div class="play-icon" id="playIcon"></div>
+        <div class="transport-icon" id="playIcon"></div>
       </div>
     </div>
 
@@ -684,8 +673,9 @@
       setArc(frac, false);
     }
 
-    playIcon.className = state.running ? "pause-icon" : "play-icon";
-    playIcon.innerHTML = state.running ? "<span></span><span></span>" : "";
+    playIcon.innerHTML = state.running
+      ? '<svg viewBox="0 0 32 32"><rect x="8" y="6" width="6" height="20" rx="2.5" fill="currentColor"/><rect x="18" y="6" width="6" height="20" rx="2.5" fill="currentColor"/></svg>'
+      : '<svg viewBox="0 0 32 32"><path d="M9 6 L25 16 L9 26 Z" fill="currentColor" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 
     card.setAttribute("data-mode", state.mode);
 
