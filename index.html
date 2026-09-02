@@ -107,7 +107,7 @@
     flex-direction: column;
     align-items: center;
     gap: 22px;
-    transition: border-color 0.4s ease;
+    transition: border-color 0.4s ease, filter 3s ease;
   }
 
   .card[data-mode="focus"] { border-color: color-mix(in srgb, var(--wood) 35%, var(--surface-border)); }
@@ -522,6 +522,11 @@
     gap: 6px;
   }
 
+  #ambientVolume {
+    width: 100px;
+    accent-color: var(--wood);
+  }
+
   .latlon-row input {
     width: 68px;
     text-align: center;
@@ -552,43 +557,44 @@
     overflow: hidden;
   }
 
-  .sky-arc {
+  .landscape {
     position: absolute;
-    left: 50%;
-    top: 62%;
-    width: 86vmin;
-    height: 86vmin;
-    transform: translate(-50%, -50%);
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 46%;
     pointer-events: none;
   }
 
-  .sky-arc .body-dot {
+  .landscape svg { width: 100%; height: 100%; display: block; }
+
+  .brightness-overlay {
     position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 24px 6px currentColor;
+    inset: 0;
+    background: #0c0e18;
+    opacity: 0;
+    transition: opacity 3s ease;
+    pointer-events: none;
   }
 
   .clock {
     position: relative;
     font-size: 15vmin;
     font-weight: 700;
-    color: var(--text);
+    color: var(--sc-text, var(--text));
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
     text-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    transition: color 3s ease;
   }
 
   .screensaver-hint {
     position: relative;
     margin: 0;
     font-size: 13px;
-    color: var(--text-muted);
-    opacity: 0.7;
+    color: var(--sc-text, var(--text-muted));
+    opacity: 0.6;
+    transition: color 3s ease;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -667,6 +673,18 @@
       <p class="daily-stats" id="dailyStats">今日: 0回 ／ 0分</p>
 
       <div class="field-row">
+        <span class="field-label">アンビエントサウンド<span class="hint">（集中=ブラウン／休憩=ピンク）</span></span>
+        <label class="switch">
+          <input type="checkbox" id="ambientToggle">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="field-row" id="ambientVolumeRow" hidden>
+        <span class="field-label">音量</span>
+        <input type="range" id="ambientVolume" min="0" max="1" step="0.05" value="0.18">
+      </div>
+
+      <div class="field-row">
         <span class="field-label">日照モード<span class="hint">（実験的）</span></span>
         <label class="switch">
           <input type="checkbox" id="daylightToggle">
@@ -713,7 +731,14 @@
 </div>
 
 <div class="screensaver" id="screensaver" hidden>
-  <div class="sky-arc" id="skyArc"></div>
+  <div class="landscape">
+    <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+      <path d="M0 160 L0 100 Q60 60 130 88 T260 78 Q320 62 400 92 L400 160 Z" fill="#a9987f" opacity="0.35"></path>
+      <path d="M0 160 L0 122 Q90 84 180 112 T400 104 L400 160 Z" fill="#8a7455" opacity="0.5"></path>
+      <path d="M0 160 L0 140 Q120 116 220 138 T400 128 L400 160 Z" fill="#5f4c37" opacity="0.65"></path>
+    </svg>
+  </div>
+  <div class="brightness-overlay" id="brightnessOverlay"></div>
   <div class="clock" id="screensaverClock">--:--</div>
   <p class="screensaver-hint">タップで戻る</p>
 </div>
@@ -749,6 +774,9 @@
   var counterMinus = document.getElementById("counterMinus");
   var counterSettings = document.getElementById("counterSettings");
   var counterStepInput = document.getElementById("counterStep");
+  var ambientToggle = document.getElementById("ambientToggle");
+  var ambientVolumeRow = document.getElementById("ambientVolumeRow");
+  var ambientVolumeInput = document.getElementById("ambientVolume");
   var daylightToggle = document.getElementById("daylightToggle");
   var daylightPanel = document.getElementById("daylightPanel");
   var daylightStatus = document.getElementById("daylightStatus");
@@ -756,7 +784,7 @@
   var lonInput = document.getElementById("lonInput");
   var screensaverBtn = document.getElementById("screensaverBtn");
   var screensaverEl = document.getElementById("screensaver");
-  var skyArc = document.getElementById("skyArc");
+  var brightnessOverlay = document.getElementById("brightnessOverlay");
   var screensaverClock = document.getElementById("screensaverClock");
 
   ringProgress.style.strokeDasharray = CIRC;
@@ -927,6 +955,7 @@
     }
     state.remaining = state.total;
     render();
+    syncAmbientToState();
   }
 
   function startPause() {
@@ -934,6 +963,7 @@
       state.running = false;
       clearInterval(state.tickId);
       render();
+      syncAmbientToState();
       return;
     }
     if (!state.started) {
@@ -946,6 +976,7 @@
     state.endAt = Date.now() + state.remaining * 1000;
     state.tickId = setInterval(tick, 250);
     render();
+    syncAmbientToState();
   }
 
   function reset() {
@@ -958,6 +989,7 @@
     state.total = state.focusMin * 60;
     state.remaining = state.total;
     render();
+    syncAmbientToState();
   }
 
   document.addEventListener("visibilitychange", function () {
@@ -1219,6 +1251,133 @@
     noise.start(now);
     return noise;
   }
+
+  // ==================== アンビエントサウンド ====================
+  // 研究知見: ブラウンノイズ=集中力・ワーキングメモリ向上、
+  // ピンクノイズ=リラックス・コルチゾール(ストレスホルモン)低下
+
+  var ambientBuffers = {};
+  var ambientState = { source: null, gain: null, currentType: null };
+
+  function makeNoiseBuffer(type) {
+    var ctx = getCtx();
+    var seconds = 8;
+    var frameCount = Math.floor(ctx.sampleRate * seconds);
+    var buffer = ctx.createBuffer(1, frameCount, ctx.sampleRate);
+    var data = buffer.getChannelData(0);
+    if (type === "pink") {
+      var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (var i = 0; i < frameCount; i++) {
+        var white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        var pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        b6 = white * 0.115926;
+        data[i] = pink * 0.1;
+      }
+    } else {
+      var last = 0;
+      for (var j = 0; j < frameCount; j++) {
+        var w = Math.random() * 2 - 1;
+        last = (last + 0.02 * w) / 1.02;
+        data[j] = last * 3.2;
+      }
+    }
+    return buffer;
+  }
+
+  function ensureAmbientBuffers() {
+    if (!ambientBuffers.pink) ambientBuffers.pink = makeNoiseBuffer("pink");
+    if (!ambientBuffers.brown) ambientBuffers.brown = makeNoiseBuffer("brown");
+  }
+
+  function ambientVolume() {
+    return parseFloat(ambientVolumeInput.value) || 0;
+  }
+
+  function stopAmbient(fadeSec) {
+    if (!ambientState.source) return;
+    var ctx = getCtx();
+    var g = ambientState.gain;
+    var src = ambientState.source;
+    try {
+      g.gain.cancelScheduledValues(ctx.currentTime);
+      g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + (fadeSec || 1));
+    } catch (e) {}
+    setTimeout(function () { try { src.stop(); } catch (e) {} }, (fadeSec || 1) * 1000 + 80);
+    ambientState.source = null;
+    ambientState.gain = null;
+    ambientState.currentType = null;
+  }
+
+  function playAmbient(type) {
+    if (!ambientToggle.checked) return;
+    if (ambientState.currentType === type && ambientState.source) return;
+    try {
+      ensureAmbientBuffers();
+      var ctx = getCtx();
+      var prevSource = ambientState.source, prevGain = ambientState.gain;
+      if (prevSource) {
+        try {
+          prevGain.gain.cancelScheduledValues(ctx.currentTime);
+          prevGain.gain.setValueAtTime(prevGain.gain.value, ctx.currentTime);
+          prevGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+        } catch (e) {}
+        setTimeout(function () { try { prevSource.stop(); } catch (e) {} }, 1300);
+      }
+      var src = ctx.createBufferSource();
+      src.buffer = ambientBuffers[type];
+      src.loop = true;
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(ambientVolume(), ctx.currentTime + 1.5);
+      src.connect(gain).connect(ctx.destination);
+      src.start();
+      ambientState.source = src;
+      ambientState.gain = gain;
+      ambientState.currentType = type;
+    } catch (e) {}
+  }
+
+  function syncAmbientToState() {
+    if (!ambientToggle.checked) { stopAmbient(0.5); return; }
+    if (state.running) {
+      playAmbient(state.mode === "focus" ? "brown" : "pink");
+    } else {
+      stopAmbient(0.8);
+    }
+  }
+
+  ambientToggle.addEventListener("change", function () {
+    ambientVolumeRow.hidden = !ambientToggle.checked;
+    try { localStorage.setItem("maai-ambient", ambientToggle.checked ? "1" : "0"); } catch (e) {}
+    syncAmbientToState();
+  });
+
+  ambientVolumeInput.addEventListener("input", function () {
+    if (ambientState.gain) {
+      var ctx = getCtx();
+      ambientState.gain.gain.setValueAtTime(ambientVolume(), ctx.currentTime);
+    }
+    try { localStorage.setItem("maai-ambient-vol", ambientVolumeInput.value); } catch (e) {}
+  });
+  ambientVolumeInput.addEventListener("click", function (e) { e.stopPropagation(); });
+
+  (function initAmbient() {
+    try {
+      if (localStorage.getItem("maai-ambient") === "1") {
+        ambientToggle.checked = true;
+        ambientVolumeRow.hidden = false;
+      }
+      var savedVol = localStorage.getItem("maai-ambient-vol");
+      if (savedVol !== null) ambientVolumeInput.value = savedVol;
+    } catch (e) {}
+  })();
 
   function playClick(up) {
     try {
@@ -1504,24 +1663,33 @@
       phase = "night"; isDaytime = false;
     }
 
-    // sun/moon arc progress 0..1 across the current daytime/nighttime span
-    var arcFrac;
-    if (isDaytime) {
-      arcFrac = (t - sunrise) / Math.max(1, sunset - sunrise);
-    } else if (t < sunrise) {
-      arcFrac = (t - prevSunset) / Math.max(1, sunrise - prevSunset);
+    // continuous 0..1 daylight brightness (0 = full night, 1 = full day)
+    var brightness;
+    if (t <= sunrise - twilight || t >= sunset + twilight) {
+      brightness = 0;
+    } else if (t < sunrise + twilight) {
+      brightness = Math.max(0, Math.min(1, (t - (sunrise - twilight)) / (twilight * 2)));
+    } else if (t <= sunset - twilight) {
+      brightness = 1;
     } else {
-      arcFrac = (t - sunset) / Math.max(1, nextSunrise - sunset);
+      brightness = Math.max(0, Math.min(1, 1 - (t - (sunset - twilight)) / (twilight * 2)));
     }
-    arcFrac = Math.max(0, Math.min(1, arcFrac));
 
-    return { color: color, phase: phase, isDaytime: isDaytime, arcFrac: arcFrac, sun: sun };
+    return { color: color, phase: phase, isDaytime: isDaytime, brightness: brightness, sun: sun };
   }
 
   function applyDaylight() {
     if (daylightState.lat === null) return;
     var sky = computeSky(new Date(), daylightState.lat, daylightState.lon);
     document.documentElement.style.setProperty("--body-bg", sky.color);
+
+    // circadian-friendly warmth: as brightness falls toward night, gently
+    // shift the whole card toward warmer, dimmer tones (less blue light).
+    var dark = 1 - sky.brightness;
+    var sepia = Math.round(dark * 45);
+    var bright = Math.round((1 - dark * 0.14) * 100);
+    card.style.filter = dark > 0.02 ? "sepia(" + sepia + "%) brightness(" + bright + "%)" : "";
+
     var phaseLabel = { dawn: "朝焼け", day: "昼", dusk: "夕焼け", night: "夜" }[sky.phase];
     daylightStatus.textContent = daylightState.source + " ／ 今: " + phaseLabel +
       "（日の出 " + formatClock2(sky.sun.sunrise) + " ・ 日の入り " + formatClock2(sky.sun.sunset) + "）";
@@ -1535,19 +1703,11 @@
 
   function renderScreensaver(sky) {
     if (screensaverEl.hidden) return;
-    var angle = Math.PI - sky.arcFrac * Math.PI; // right-to-left arc, high at midpoint
-    var cx = 50 + Math.cos(angle) * 42;
-    var cy = 50 - Math.sin(angle) * 42;
-    var dot = skyArc.querySelector(".body-dot");
-    if (!dot) {
-      dot = document.createElement("div");
-      dot.className = "body-dot";
-      skyArc.appendChild(dot);
-    }
-    dot.style.left = cx + "%";
-    dot.style.top = cy + "%";
-    dot.style.color = sky.isDaytime ? "#e8b26a" : "#c9d3e8";
-    dot.style.background = sky.isDaytime ? "#f4c67a" : "#dbe3f2";
+    // brightness 1 (noon) -> 0 (deep night): darken the whole view accordingly
+    var darkness = (1 - sky.brightness) * 0.82;
+    brightnessOverlay.style.opacity = darkness;
+    var isDark = sky.brightness < 0.45;
+    document.documentElement.style.setProperty("--sc-text", isDark ? "#f2ede2" : "#2b2924");
     screensaverClock.textContent = formatClock2(new Date());
   }
 
@@ -1587,6 +1747,7 @@
   function disableDaylight() {
     stopDaylightLoop();
     document.documentElement.style.removeProperty("--body-bg");
+    card.style.filter = "";
   }
 
   daylightToggle.addEventListener("change", function () {
