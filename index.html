@@ -1060,15 +1060,23 @@
     try {
       var ctx = getCtx();
       var now = ctx.currentTime;
-      var pitch = up ? 1 : 0.82;
+      var pitch = up ? 1 : 0.86;
 
-      // 1st transient: the button/lever strike — sharp, broadband, very short
-      noiseBurst(ctx, now, 0.006, "bandpass", 4200 * pitch, 0.5, 0.01);
-      noiseBurst(ctx, now, 0.004, "highpass", 5500, 0.18, 0.006);
+      // soft "tock" body — a short damped tone, like a wooden bead or toy click
+      var osc = ctx.createOscillator();
+      var oscGain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(520 * pitch, now);
+      osc.frequency.exponentialRampToValueAtTime(300 * pitch, now + 0.04);
+      oscGain.gain.setValueAtTime(0, now);
+      oscGain.gain.linearRampToValueAtTime(0.22, now + 0.004);
+      oscGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.05);
+      osc.connect(oscGain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
 
-      // 2nd transient: the ratchet/gear catching a beat later — slightly softer, lower
-      var t2 = now + 0.014;
-      noiseBurst(ctx, t2, 0.008, "bandpass", 2100 * pitch, 0.32, 0.014);
+      // a touch of soft click texture, rounded rather than harsh
+      noiseBurst(ctx, now, 0.006, "bandpass", 1800 * pitch, 0.16, 0.012);
     } catch (e) {}
   }
 
